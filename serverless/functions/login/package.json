@@ -1,0 +1,12 @@
+{
+  "name": "login",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "zip": "powershell -ExecutionPolicy Bypass -File ../../zip.ps1 login"
+  }
+}
+
+
