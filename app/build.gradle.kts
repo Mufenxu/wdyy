@@ -32,18 +32,37 @@ android {
 
     signingConfigs {
         create("release") {
-            val storeFilePath = project.properties["RELEASE_STORE_FILE"] as String
-            storeFile = file(storeFilePath)
-            storePassword = project.properties["RELEASE_STORE_PASSWORD"] as String
-            keyAlias = project.properties["RELEASE_KEY_ALIAS"] as String
-            keyPassword = project.properties["RELEASE_KEY_PASSWORD"] as String
+            val storeFilePath = (project.findProperty("RELEASE_STORE_FILE") as String?)
+                ?: System.getenv("RELEASE_STORE_FILE")
+            val storePwd = (project.findProperty("RELEASE_STORE_PASSWORD") as String?)
+                ?: System.getenv("RELEASE_STORE_PASSWORD")
+            val keyAliasProp = (project.findProperty("RELEASE_KEY_ALIAS") as String?)
+                ?: System.getenv("RELEASE_KEY_ALIAS")
+            val keyPwd = (project.findProperty("RELEASE_KEY_PASSWORD") as String?)
+                ?: System.getenv("RELEASE_KEY_PASSWORD")
+
+            if (storeFilePath != null && file(storeFilePath).exists() &&
+                !storePwd.isNullOrBlank() && !keyAliasProp.isNullOrBlank() && !keyPwd.isNullOrBlank()) {
+                storeFile = file(storeFilePath)
+                storePassword = storePwd
+                keyAlias = keyAliasProp
+                keyPassword = keyPwd
+            } else {
+                println("[Gradle] Release keystore not configured or not found; will fall back to debug signing in release builds.")
+            }
         }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release")
+            val releaseStorePath = (project.findProperty("RELEASE_STORE_FILE") as String?)
+                ?: System.getenv("RELEASE_STORE_FILE")
+            signingConfig = if (releaseStorePath != null && file(releaseStorePath).exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
