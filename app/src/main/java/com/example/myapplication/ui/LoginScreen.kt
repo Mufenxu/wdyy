@@ -28,6 +28,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.outlined.ErrorOutline
 import com.example.myapplication.SessionManager
 import com.example.myapplication.BuildConfig
 import okhttp3.MediaType.Companion.toMediaType
@@ -141,16 +142,14 @@ fun LoginScreen(
         Modifier
             .fillMaxSize()
             .background(bgBrush),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.TopCenter
     ) {
-        Card(
-            modifier = Modifier
-                .padding(horizontal = 24.dp)
+        Column(
+            Modifier
+                .padding(horizontal = 24.dp, vertical = 56.dp)
                 .fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Surface(
                     modifier = Modifier.size(88.dp),
                     shape = CircleShape,
@@ -167,11 +166,7 @@ fun LoginScreen(
                     )
                 }
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = "登录",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Text(text = "登录", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(20.dp))
 
                 TextField(
@@ -288,11 +283,24 @@ fun LoginScreen(
                     }
                 }
 
-                error?.let { msg ->
+                error?.let { raw ->
+                    val pretty = remember(raw) {
+                        val fromJson = Regex("\"message\":\"(.*?)\"").find(raw)?.groupValues?.getOrNull(1)
+                        if (!fromJson.isNullOrBlank()) fromJson else raw
+                    }
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text(msg, color = MaterialTheme.colorScheme.error)
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Outlined.ErrorOutline, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(text = pretty)
+                        }
+                    }
                 }
-            }
         }
     }
 }

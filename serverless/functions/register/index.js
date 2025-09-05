@@ -99,9 +99,14 @@ module.exports = async (ctx) => {
   // 使用 EMAS Serverless 提供的 ctx.mpserverless.db 直接访问云数据库
   try {
     const coll = ctx.mpserverless.db.collection('users');
-    const existed = await coll.findOne({ username });
-    const existedData = (existed && existed.data) ? existed.data : (existed && existed.success && existed.data ? existed.data : null);
-    if (existedData) {
+    // 某些环境下 findOne 返回结构不一致，改用 find + limit 并做鲁棒判断
+    const q = await coll.find({ username }).limit(1);
+    let exists = false;
+    try {
+      const d = (q && (q.data ?? q.result?.data ?? q.result ?? q[0]));
+      exists = Array.isArray(d) ? d.length > 0 : !!d;
+    } catch (_) {}
+    if (exists) {
       return { success: false, message: '用户名已存在' };
     }
     const salt = crypto.randomBytes(8).toString('hex');
